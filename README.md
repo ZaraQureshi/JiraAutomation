@@ -1,0 +1,40 @@
+from weasyprint import HTML
+
+# Content for the README.md
+readme_content = """# Jira Intelligence Automation Tool
+
+An AI-driven automation engine designed to streamline Jira ticket management. This tool leverages transformer-based models to automatically classify ticket priority, identify historical context via semantic similarity, and assess developer availability through sentiment analysis.
+
+## 🚀 Features
+
+### 1. Automated Priority Prediction
+- **Model:** DistilBERT
+- **Dataset:** Apache Jira Dataset
+- **Functionality:** Analyzes the ticket `Summary` and `Description` to predict the priority level, reducing manual triaging effort.
+
+### 2. Semantic Ticket Matching
+- **Model:** `all-MiniLM-L6-v2` (Sentence-Transformers)
+- **Mechanism:** Generates vector embeddings for the new ticket and compares them against historical data using **Cosine Similarity**.
+- **Output:** Fetches the most relevant previously closed tickets to provide context for the current issue.
+
+### 3. Developer Sentiment & Workload Analysis
+- **Model:** `distilbert-base-uncased-finetuned-sst-2-english`
+- **Logic:** Identifies the developer assigned to the most similar historical tickets and analyzes their 10 most recent comments.
+- **Goal:** Evaluates sentiment to gauge if the developer is currently overloaded or stressed before auto-assignment recommendations.
+
+## Tech Stack
+
+- **Backend Framework:** FastAPI (Asynchronous API endpoints)
+- **Machine Learning:** Hugging Face Transformers, Sentence-Transformers
+- **Model Hosting:** Hugging Face Hub (Versioned, ready-to-use models)
+
+## Project Structure
+
+```text
+├── src/api/                # FastAPI application endpoints
+├── src/models/             # Scripts for model loading and inference
+├── src/data/               # Scripts for data loading and preprocessing
+├── src/storage/            # Uploading and downloading models from HF
+├── scripts/                # Data preprocessing and training logic
+├── pyproject.toml          # Project dependencies
+└── README.md
