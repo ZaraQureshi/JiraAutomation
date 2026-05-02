@@ -2,21 +2,22 @@ from pathlib import Path
 from typing import List, Optional
 
 from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, Trainer, TrainingArguments, pipeline
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, datasets
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
-from datasets import Dataset, ClassLabel
+from datasets import Dataset, ClassLabel, DatasetDict
 import numpy as np
 import joblib
 import pandas as pd
 import torch
+import json
 
 class PriorityPredictor:
     def __init__(self,model_path=None):
         self.model_path=model_path
-        self.num_labels:List=[]
-        self.label_map:List=[]
-        self.tokenizer:str=""
+        self.num_labels:int=0
+        self.label_map:dict={}
+        self.tokenizer=None
         self.device=0 if torch.cuda.is_available() else -1
 
     @staticmethod
@@ -32,8 +33,10 @@ class PriorityPredictor:
         return self.tokenizer
 
     def tokenize_data(self, sample, save_path, max_length=128):
-        if self.tokenizer is "":
+        if self.tokenizer is None:
             self.tokenizer=self.load_tokenizer()
+            print(f"self.tokenizer:{self.tokenizer}")
+
         dataset=Dataset.from_pandas(pd.DataFrame({
             'text': sample['text_combined'],                                                    
             'label': sample['priority.id'] 
@@ -42,33 +45,56 @@ class PriorityPredictor:
         
 
          # Label mapping                                                                                                 
-        unique_ids = sorted(set(dataset['label']))                                                                      
-        self.label_map = {old: i for i, old in enumerate(unique_ids)}                                                   
+        unique_ids = sorted(set(dataset['label'])) 
+        print(f"dataset['label']:{dataset['label']}")
+   
+        print(f"unique_ids:{unique_ids}")
+
+        # the labels are 1,2,3,4,5. we are mapping them to corresponding 0,1,2,3,4. label_map={1: 0, 2: 1, 3: 2}
+        # i is the index and old is the original value of the unique_ids
+        # we are doing this because the model's final layer (logits) starts at 0
+
+        # without this setp, if the priority.ids were [10,20,30], the model would create 31 neurons in the output layer, with most of them being useless and resulting into value error
+                             
+        self.label_map = {old: i for i, old in enumerate(unique_ids)}     
+
+        # when we load from disk, we have the remapped labels but we have lost the mapping back to the original priority.ids
+        # therefore, creating a json to save the original mapping
+        label_map_path = Path(save_path).parent / "label_map.json"
+        with open(label_map_path, 'w') as f:
+            json.dump(self.label_map, f)
+
         self.num_labels = len(unique_ids)                                                                               
 
         dataset = dataset.map(lambda x: {'label': self.label_map[x['label']]})                                          
         dataset = dataset.cast_column("label", ClassLabel(num_classes=self.num_labels))                                 
         
-        # Split data                                                                                                    
-        split = dataset.train_test_split(test_size=0.2)                                                       
-        print(f"split dataset: {split}")
+       
         # Tokenize                                                                                                      
         def tokenize_fn(batch):                                                                                         
             return self.tokenizer(batch["text"], truncation=True, padding="max_length", max_length=max_length)          
 
-        tokenized_dataset = split.map(tokenize_fn, batched=True)                                                      
-        tokenized_dataset.set_format("torch", columns=["input_ids", "attention_mask", "label"])  
+        tokenized_dataset = dataset.map(tokenize_fn, batched=True) 
+
+        # Split data after tokenizing, so that tokenization is not done on both the splits separately because it is inefficient and causes data leakage.                                                                                                  
+        split = tokenized_dataset.train_test_split(test_size=0.2)                                                       
+        print(f"split dataset: {split}")                                                   
+        # tokenized_dataset.set_format("torch", columns=["input_ids", "attention_mask", "label"])  
 
         #save tokenized data                       
         Path(save_path).mkdir(parents=True, exist_ok=True)                                                              
-        tokenized_dataset.save_to_disk(save_path)                                                                       
+        split.save_to_disk(save_path)                                                                       
         print(f"Tokenized data saved to: {save_path}")                                                                                                                       
-        return tokenized_dataset                     
+        return split                     
 
 
     def train(self, tokenized_dataset ,save_path):
-        # Split data                                                                                                    
-        # split = tokenized_dataset.train_test_split(test_size=0.2)                                                       
+        # Extract num_labels from dataset if not already set
+        if self.num_labels == 0 or self.num_labels is None:
+          unique_labels = set(tokenized_dataset["train"]["label"])
+          self.num_labels = len(unique_labels)
+          print(f"Extracted num_labels={self.num_labels} from dataset")
+
         print(f"self.num_labels: {self.num_labels}")                                                                                                              
         # Load model                                                                                                    
         model = DistilBertForSequenceClassification.from_pretrained(                                                    
@@ -100,15 +126,32 @@ class PriorityPredictor:
         return {"path": save_path}
     
     def training_process(self,sample,model_path,token_path):
-        if token_path=="":
-            tokenized_dataset=self.tokenize_data(sample, token_path, max_length=128)
+        print(f"model_path:{model_path}")
+        print(f"token_path:{token_path}")
+        
+        if Path(token_path).exists():
+            # Load pre-tokenized data from disk
+            tokenized_dataset = DatasetDict.load_from_disk(token_path)
+
+             # Extract num_labels from loaded data
+            unique_labels = set(tokenized_dataset["train"]["label"])
+            self.num_labels = len(unique_labels)
+
+            #loading label_map from json to retain the original mapping of teh priority.ids
+            label_map_path = Path(token_path).parent / "label_map.json"
+            if label_map_path.exists():
+                with open(label_map_path, 'r') as f:
+                    self.label_map = json.load(f)
+            print(f"Loaded tokenized data from: {token_path}")
         else:
-            tokenized_dataset=token_path
+            # Tokenize and save
+            tokenized_dataset = self.tokenize_data(sample, token_path)
+
         path=self.train(tokenized_dataset,model_path)
         return {"path": path}
 
     def predict(self, text):
-        classifier = pipeline("text-classification", model=self.model_path, device=self.device)
+        classifier = pipeline("text-classification", model=self.model_path+"/priority_model_v1", device=self.device)
         return classifier(text)[0]
 
 
@@ -131,7 +174,7 @@ class SimilarTicketFinder:
         self.embeddings=joblib.load(load_path)
         return self.embeddings
     
-    def find(self,text,df,embeddings,top_k=5):
+    def find(self,text,df,embeddings=None,top_k=5):
         if embeddings is None:
             if self.embeddings is None:
                 embeddings=self.load_embeddings(self.save_path)
