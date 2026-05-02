@@ -5,24 +5,25 @@ from src.storage import HFStorage
 
 
 class JiraMLService:
-    def __init__(self,issues_df,comments_df):
+    def __init__(self):
         self.settings=get_settings()
-        self.storage=HFStorage()
-        self.issues_df = issues_df
-        self.comments_df = comments_df
+        self.storage=HFStorage(self.settings.hf_repo_id,self.settings.hf_token)
+        # self.issues_df = issues_df
+        # self.comments_df = comments_df
         self.predictor = None
         self.finder = None
 
     def initialize(self):
-        loader=DataLoader(self.settings.data_dir/"filtered_issues.csv",self.settings.data_dir/"filtered_comments.csv")
+        loader=DataLoader(self.settings.data_dir/"issues.csv",self.settings.data_dir/"comments.csv")
         self.issues_df=loader.load_issues()
         self.comments_df = loader.load_comments()
 
         model_path=self.storage.download_model(
-            "priority_model",self.settings.model_dir
+            "priority_model_v1",self.settings.model_dir
         )
+        
         embeddings_path = self.storage.download_file(
-            "embeddings",
+            "similarity_index.joblib",
             str(self.settings.model_dir)
         )
 
