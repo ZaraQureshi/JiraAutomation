@@ -25,8 +25,9 @@ def upload_HF(settings, model_path, embeddings_path):
     print("Uploading to HF Hub...")
     storage = HFStorage(settings.hf_repo_id, settings.hf_token)
     storage.upload_model(model_path, "priority_model_v1/")
-    storage.upload_file(embeddings_path, "embeddings/similarity_index.joblib")
+    storage.upload_file(embeddings_path, "similarity_index.joblib")
     print("Upload complete!")
+
 def main():
     settings=get_settings()
 
