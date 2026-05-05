@@ -7,7 +7,8 @@ from src.config import get_settings
 from src.service import get_service
 
 
-settings=get_settings()
+service=get_service()
+
 app=FastAPI(title="Jira ML Automation", version="1.0.0")
 
 class AnalyzeRequest(BaseModel):
@@ -21,12 +22,11 @@ class AnalyzeResponse(BaseModel):
     dev_mood: dict
     similar_tickets: List[dict]
 
-@app.post("/api/v1/analyze", response_model=AnalyzeResponse)
+@app.post(f"/api/v1/analyze", response_model=AnalyzeResponse)
 async def analyze(req: AnalyzeRequest):
     try:
-        service=get_service()
         result=service.analyze(req.summary,req.description)
-        return AnalyzeResponse(result)
+        return AnalyzeResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
