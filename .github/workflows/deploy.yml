@@ -1,0 +1,26 @@
+name: Sync to Hugging Face
+on:
+  push:
+    branches: [master] # Or 'master' depending on your default branch name
+    # ONLY run if files in these paths change
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'run.sh'
+    # IGNORE changes to these files
+    paths-ignore:
+      - 'README.md'
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Push to Hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git push --force https://ZaraQureshi:$HF_TOKEN@huggingface.co/spaces/ZaraQureshi/JiraAutomation main
