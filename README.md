@@ -55,5 +55,9 @@ An AI-driven automation engine designed to streamline Jira ticket management. Th
 
 ```
 HuggingFace Spaces: https://huggingface.co/spaces/ZaraQureshi/JiraAutomation
+
 HuggingFace Hub: https://huggingface.co/ZaraQureshi/jira-ml-models
-```
+
+## Next steps
+- Fine tune distilBERT to achieve better accuracy
+- Use FAISS/Pinecone instead of cosine similarity 
