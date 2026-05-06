@@ -17,7 +17,9 @@ class JiraMLService:
         #called once when the app starts due to lazyloading
         loader=DataLoader(self.settings.dataset_repo_id,self.settings.hf_token)
         self.issues_df=loader.load_issues()
+        print(f"issues_df:{self.issues_df}")
         self.comments_df = loader.load_comments()
+        print(f"comments_df:{self.comments_df}")
 
         model_path=self.storage.download_model(
             "priority_model_v1",self.settings.model_dir
@@ -33,6 +35,7 @@ class JiraMLService:
         return self
     
     def analyze(self, summary, description):
+        print(f"self.issues_df:{self.issues_df}")
         full_text = f"{summary} {description}"
         priority = self.predictor.predict(full_text)
         similar = self.finder.find(full_text, self.issues_df)

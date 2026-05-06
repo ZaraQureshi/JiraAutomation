@@ -1,6 +1,6 @@
 import pandas as pd
 from pathlib import Path
-from datasets import load_dataset
+from datasets import Features, Value, load_dataset
 class DataLoader:
     def __init__(self, repo_id, token):
         self.repo_id = repo_id
@@ -8,7 +8,21 @@ class DataLoader:
         
     def load_issues(self):
         # Stream from cloud directly to memory
-        ds = load_dataset(self.repo_id, data_files="issues.csv", split="train",
+        
+        features = Features({
+            "key":Value("string"),
+
+            "summary": Value("string"),
+            "description": Value("string"),
+            "issuetype.name": Value("string"),
+            "priority.id": Value("double"),
+            "project.key": Value("string"),
+            "project.name": Value("string"),
+            "reporter": Value("string"),
+            "assignee": Value("string"),
+            "status.name": Value("string"),
+        })
+        ds = load_dataset(self.repo_id, data_files="issues.csv", split="train",features=features,
                           token=self.token, streaming=False)
         df = ds.to_pandas()
         # Ensure your custom field is treated as an object
