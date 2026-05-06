@@ -30,6 +30,7 @@ An AI-driven automation engine designed to streamline Jira ticket management. Th
 ## Project Structure
 
 ```text
+├── src/ui/app/             # Streamlit UI
 ├── src/api/                # FastAPI application endpoints
 ├── src/models/             # Scripts for model loading and inference
 ├── src/data/               # Scripts for data loading and preprocessing
