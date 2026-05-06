@@ -8,7 +8,7 @@ class DataLoader:
         
     def load_issues(self):
         # Stream from cloud directly to memory
-        ds = load_dataset(self.repo_id, data_files="issues.csv", 
+        ds = load_dataset(self.repo_id, data_files="issues.csv", split="train",
                           token=self.token, streaming=False)
         df = ds.to_pandas()
         # Ensure your custom field is treated as an object
@@ -17,7 +17,7 @@ class DataLoader:
         return self._clean_issues(df)
     
     def load_comments(self):
-        ds = load_dataset(self.repo_id, data_files="comments.csv", 
+        ds = load_dataset(self.repo_id, data_files="comments.csv", split="train",
                           token=self.token, streaming=False)
         return ds.to_pandas()
 
