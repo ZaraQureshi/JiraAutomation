@@ -1,17 +1,25 @@
 import pandas as pd
 from pathlib import Path
-
+from datasets import load_dataset
 class DataLoader:
-    def __init__(self, issues_path, comments_path):
-        self.issues_path=issues_path
-        self.comments_path=comments_path
-    
+    def __init__(self, repo_id, token):
+        self.repo_id = repo_id
+        self.token = token
+        
     def load_issues(self):
-        df = pd.read_csv(self.issues_path, dtype={'customfield_12310921': 'object'})
+        # Stream from cloud directly to memory
+        ds = load_dataset(self.repo_id, data_files="issues.csv", 
+                          token=self.token, streaming=False)
+        df = ds.to_pandas()
+        # Ensure your custom field is treated as an object
+        if 'customfield_12310921' in df.columns:
+            df['customfield_12310921'] = df['customfield_12310921'].astype(object)
         return self._clean_issues(df)
     
     def load_comments(self):
-        return pd.read_csv(self.comments_path)
+        ds = load_dataset(self.repo_id, data_files="comments.csv", 
+                          token=self.token, streaming=False)
+        return ds.to_pandas()
 
     def _clean_issues(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.dropna(subset=['summary'])
