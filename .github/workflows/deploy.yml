@@ -2,12 +2,7 @@ name: Sync to Hugging Face
 on:
   push:
     branches: [master] # Or 'master' depending on your default branch name
-    # ONLY run if files in these paths change
-    paths:
-      - 'src/**'
-      - 'Dockerfile'
-      - 'requirements.txt'
-      - 'run.sh'
+    
     # IGNORE changes to these files
     paths-ignore:
       - 'README.md'
