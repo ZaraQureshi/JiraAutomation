@@ -34,6 +34,13 @@ An AI-driven automation engine designed to streamline Jira ticket management. Th
 - **Machine Learning:** Hugging Face Transformers, Sentence-Transformers
 - **Model Hosting:** Hugging Face Hub (Versioned, ready-to-use models)
 
+## Deployment
+- Application containerized using Docker
+- CI/CD pipeline triggers on every GitHub push
+- Automatic deployment to Hugging Face Spaces
+- Models uploaded and versioned on Hugging Face Hub
+- Datasets loaded directly from Hugging Face Datasets
+
 ## Project Structure
 
 ```text
@@ -45,3 +52,8 @@ An AI-driven automation engine designed to streamline Jira ticket management. Th
 ├── scripts/                # Data preprocessing and training logic
 ├── pyproject.toml          # Project dependencies
 └── README.md
+
+```
+HuggingFace Spaces: https://huggingface.co/spaces/ZaraQureshi/JiraAutomation
+HuggingFace Hub: https://huggingface.co/ZaraQureshi/jira-ml-models
+```
