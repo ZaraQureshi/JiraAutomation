@@ -1,14 +1,14 @@
-import subprocess
-import sys
+
 import requests
 import streamlit as st
 
 from src.config import get_settings
 
 
+
 def start_services():
     settings=get_settings()
-    print(f"settings.api_url:{settings.api_url}")
+    
     st.title("Jira AI Automation Dashboard")
     
     # SECTION 1: Analyze Ticket API (Requires Input)
