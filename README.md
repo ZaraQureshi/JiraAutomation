@@ -1,5 +1,12 @@
 
-
+---
+title: Jira Automation
+emoji: 🤖
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
 # Jira Intelligence Automation Tool
 
 An AI-driven automation engine designed to streamline Jira ticket management. This tool leverages transformer-based models to automatically classify ticket priority, identify historical context via semantic similarity, and assess developer availability through sentiment analysis.
