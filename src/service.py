@@ -8,13 +8,14 @@ class JiraMLService:
     def __init__(self):
         self.settings=get_settings()
         self.storage=HFStorage(self.settings.hf_repo_id,self.settings.hf_token)
-        # self.issues_df = issues_df
-        # self.comments_df = comments_df
+       
         self.predictor = None
         self.finder = None
+        self.mood_checker = DeveloperMoodChecker()
 
     def initialize(self):
-        loader=DataLoader(self.settings.data_dir/"issues.csv",self.settings.data_dir/"comments.csv")
+        #called once when the app starts due to lazyloading
+        loader=DataLoader(self.settings.dataset_repo_id,self.settings.hf_token)
         self.issues_df=loader.load_issues()
         self.comments_df = loader.load_comments()
 
@@ -36,7 +37,7 @@ class JiraMLService:
         priority = self.predictor.predict(full_text)
         similar = self.finder.find(full_text, self.issues_df)
         top_dev = similar.iloc[0]['assignee'] if len(similar) > 0 else "unknown"
-        mood = DeveloperMoodChecker().analyze(self.comments_df, top_dev)
+        mood = self.mood_checker.analyze(self.comments_df, top_dev)
         
         return {
             "predicted_priority": priority,

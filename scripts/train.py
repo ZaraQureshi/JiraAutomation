@@ -32,20 +32,17 @@ def main():
     settings=get_settings()
 
     # Load data
-    loader = DataLoader(
-        str(settings.data_dir / "issues.csv"),
-        str(settings.data_dir / "comments.csv")
-    )
+    loader = DataLoader(settings.dataset_repo_id,settings.hf_token)
     issues = loader.load_issues()
     embeddings_path = str(settings.model_dir / "similarity_index.joblib")
     model_path = str(settings.model_dir / "priority_model_v1")
     token_path=str(settings.token_dir)
 
     # Train priority model
-    # train_model(issues,model_path,token_path)
+    train_model(issues,model_path,token_path)
 
     # Build similarity index
-    # create_embeddings(settings,issues)
+    create_embeddings(settings,issues)
     
     # Upload to HF Hub
     upload_HF(settings, model_path, embeddings_path)

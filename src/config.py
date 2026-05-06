@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     hf_repo_id: Optional[str] = None
     hf_token: Optional[str] = None
     api_url: Optional[str] = None
+    dataset_repo_id:Optional[str]=None
 
     #Paths
     base_dir:Path=ROOT_DIR
